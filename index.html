@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AdFaceAntoine Viewer</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="./antoine.png" />
+
+    <!-- OpenLayers CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v9/ol.css" />
+
+    <link rel="stylesheet" href="./style.css" />
+
+    <!-- External Libraries -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/ol@v9/dist/ol.js" defer></script>
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.132/Build/Cesium/Cesium.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/ol-cesium@2/dist/olcesium.js" defer></script>
+  </head>
+  <body>
+    <div id="app" v-cloak>
+      <div class="header">
+        <h1>AdFaceAntoine Viewer</h1>
+        <button @click="toggleViewMode" class="view-toggle-btn">
+          {{ is3dMode ? 'Voir la carte 2D' : 'Voir la Terre 3D' }}
+        </button>
+      </div>
+
+      <div class="map-container">
+        <div id="map"></div>
+
+        <!-- Popup container -->
+        <div id="popup" class="ol-popup">
+          <a href="#" id="popup-closer" class="ol-popup-closer"></a>
+          <div id="popup-content"></div>
+        </div>
+
+        <!-- Status messages -->
+        <div v-if="loading" class="status-overlay">Chargement des données...</div>
+        <div v-if="error" class="status-overlay error">Erreur : {{ error }}</div>
+
+        <!-- Legend -->
+        <div class="legend">
+          <span class="legend-icon"></span>
+          {{ markerCount }} AdFaceAntoine{{ markerCount !== 1 ? 's' : '' }}
+        </div>
+
+        <!-- Copyright -->
+        <div class="copyright">
+          <a href="https://github.com/kernoeb" target="_blank" rel="noopener" style="color: #666; text-decoration: none"
+            >© kernoeb</a
+          >
+        </div>
+      </div>
+    </div>
+
+    <script src="./app.js" />
+  </body>
+</html>

@@ -1,7 +1,7 @@
 /* global Vue, ol, olcs, Cesium */
 
 document.addEventListener('DOMContentLoaded', () => {
-  const { createApp, ref, onMounted, onBeforeUnmount } = Vue
+  const { createApp, ref, onMounted, onBeforeUnmount, watch } = Vue
 
   createApp({
     setup() {
@@ -9,13 +9,18 @@ document.addEventListener('DOMContentLoaded', () => {
       const error = ref(null)
       const markerCount = ref(0)
       const is3dMode = ref(false)
+      const datasetFilter = ref('both')
 
-      const GEOJSON_URL = 'https://gist.githubusercontent.com/kernoeb/95db7d5949f8c558fab754ba18214dc6/raw/mapdata.geojson'
+      const GEOJSON_URL = 'https://gist.githubusercontent.com/kernoeb/95db7d5949f8c558fab754ba18214dc6/raw'
+      const GEOJSON_URL_2 = 'https://gist.githubusercontent.com/kernoeb/f01bf112ec1ac5493fc9f4259d4bc173/raw'
       const antoinePngBase64 = `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHAAAABwCAIAAABJgmMcAAAFaklEQVR4nOycS2slRRTH69VtcjMxMTOJMg4DIoyMoC4dHAQd/BCCoMxeBB8g+AFcuBAXs1cZ8Qu4GhBciSuXA9m5Cmpek3tv0p3c7q4jtwtRwXSd1n/RSTi/bSr1+N3urkefPo4efKIEHGboDlw0RCgYEQpGhIIRoWBEKBgRCkaEghGhYEQoGBEKRoSCEaFgRCgYEQpGhIIRoWBEKBgRCkaEghGhYEQoGBEKRoSCcSkqJaJ4GaW0UlrrQVoPpGg9iVCd2XgZpRWRajy6baWda38vBjW69RRCPandg8KT6v75PVFu7eVRjmxb66pu9iZl9NIjUkarK0sLBn2NIoUSkc7s3ri88+H9nYPCGH3a3WeNrhr/8nNXv/v0TVX7cPv/T7wns5Bt/rL9xsffdvvUWntP66ujHz5/e31lkaoGeO+nuELp1/3D/UkZLbkzLsBta1XVfvvgiFO29t6zn7Z8kjxDc2d1S8cV2njKXPxR2xet41NN6FieoPWEs3xQeZpQor/KpGidUyZR67IOBSNCwYhQMCIUjAgFI0LBiFAwSdahxmhrwsL+3wvYdgtt4BvpdgtrY9WGjqVoPYlQIjUtZs18g37qyrn9qzoqK3jrjadQeXcflZp3MsXSHi2UVO7May9d358ez7eAp3TZGF039OIz68xjNi6elkf5K89fi2w+263n2vJC7gy4A0rpJF/SWRM/PgojgZ+HMlsPHUjQepJnaBJN56T1NIcjvGJJJgV264k6kOYVSIpKz0nrsg4FI0LBiFAwIhSMCAUjQsGIUDA91qHs14QpQoaSEN7MMgr2GBFbqFbasl9kD7v1ZKMd7wYlpTx3RFyhTUPTacGIGSKj9fLosbN/kRKp6aT0RN2DIiJnzaVFbgxWXKj3ZBbzh5tbr35w3+iuOyTEDG2sjn68d3djZYSNGQISYrB2xsXtd7/cjsVg1Q3dunn1wWdvMWOwuFdo3dCkOOGUzJxJE5MBhkg9OjzmDGpSzPjVcoW2MUORk4f21YLPmA+mM0DmTDsu0xmD5Z3tcZ/1muXjc2IbtMSvcmD+7O2pcU6hQK8RnZur6bwgQsGIUDAiFIwIBSNCwYhQMEneenpP3hN5ikVwKMPem/p4gA2X+daz7SGqwr+DF6q1WlrMzShXsyby8ReRmtXMag37eCIOkcrt0kmd4qQBL7Sq/c+bW2vLC03tOw5HiOjSYn7j2hrnQLLx9HBzq/YEMUBE1pn96XF1xj9NDBu4vUl556NvOOVv3Xz6p3t3u09x5rens4dH5e33vz5MEK3X62NbDsNMSiGEMxrI+c9/MefiZYDM8mBEKBgRCkaEghGhYEQoGBEKRoSCEaFgemw9+bsU/maOQm6HaIE+u0PgbqrN89GvQq7Q2MD/C/PeZra7v5pIOdsrPwiwn3VD7XFPw/8XnlBSmTMbq0vdoTjh7M57tTsuOAlnZnXz+0HBORyZTEumpMyZy4+PUE7bUBy/vjLi/wvvS7qQYKo4icZVmczujMvX3/tq5+CoIytOIHd2bXkhOnTdpi7aHZfdP5Ix2nt64dknv//iHTqpIkexbPom7GJeoZQ589QTlyKRI0Qqs65N2sVhVje/PWLlWOKTObuxuqROZiihqmdKOfakRIqqyOn6/PZsNXHrTDDRzeevqlZV7GVBT/j9BM/yIf8Vv84UyZPCxIwVykfWoWBEKBgRCkaEghGhYEQoGBEKZpi8TYka1WlyQfVimLxNKQjpmg7LHp/ApGCYvE0p0Eb7hm5cvzLsdyjD5W1KQbpcUGwuYt6mQRkyb1MKBo8lu4B5m4ZF1qFgRCgYEQpGhIIRoWBEKBgRCkaEghGhYEQomD8CAAD//3KPROZbXCAOAAAAAElFTSuQmCC`
 
       let mapInstance = null
       let olCesiumInstance = null
       let vectorSource = null
+      let vectorLayer = null
+      let vectorSource2 = null
+      let vectorLayer2 = null
       let refreshTimer = null
 
       const loadGeoJson = async () => {
@@ -40,6 +45,51 @@ document.addEventListener('DOMContentLoaded', () => {
           vectorSource.clear()
           vectorSource.addFeatures(features)
           markerCount.value = vectorSource.getFeatures().length
+
+          // Load second GeoJSON (red points)
+          try {
+            const response2 = await fetch(
+              `${GEOJSON_URL_2}?_=${Date.now()}`,
+              { cache: 'no-store' },
+            )
+            if (!response2.ok) {
+              console.warn(
+                `Second GeoJSON HTTP error - status: ${response2.status}`,
+              )
+            } else {
+              const data2 = await response2.json()
+              const features2 = new ol.format.GeoJSON().readFeatures(data2, {
+                featureProjection: 'EPSG:3857',
+              })
+
+              // Build a line from points if needed
+              const lineAndGeoms = []
+              const pointCoords = []
+              for (const f of features2) {
+                const geom = f.getGeometry()
+                const type = geom.getType()
+                if (type === 'Point') {
+                  pointCoords.push(geom.getCoordinates())
+                } else if (type === 'LineString' || type === 'MultiLineString') {
+                  lineAndGeoms.push(f)
+                }
+              }
+              if (pointCoords.length >= 2) {
+                // Keep order as provided
+                const lineFeature = new ol.Feature({
+                  geometry: new ol.geom.LineString(pointCoords),
+                })
+                lineAndGeoms.push(lineFeature)
+              }
+
+              if (vectorSource2) {
+                vectorSource2.clear()
+                vectorSource2.addFeatures(lineAndGeoms)
+              }
+            }
+          } catch (e2) {
+            console.warn('Non-fatal: failed to load second GeoJSON', e2)
+          }
         } catch (e) {
           console.error(
             'Échec du chargement du GeoJSON :',
@@ -48,6 +98,15 @@ document.addEventListener('DOMContentLoaded', () => {
           error.value = e.message
         } finally {
           loading.value = false
+        }
+      }
+
+      const applyDatasetFilter = () => {
+        if (vectorLayer) {
+          vectorLayer.setVisible(datasetFilter.value === 'both' || datasetFilter.value === 'geo1')
+        }
+        if (vectorLayer2) {
+          vectorLayer2.setVisible(datasetFilter.value === 'both' || datasetFilter.value === 'geo2')
         }
       }
 
@@ -63,6 +122,15 @@ document.addEventListener('DOMContentLoaded', () => {
           autoPan: { animation: { duration: 250 } },
         })
 
+        // Second dataset: red trace/line
+        vectorSource2 = new ol.source.Vector()
+        vectorLayer2 = new ol.layer.Vector({
+          source: vectorSource2,
+          style: new ol.style.Style({
+            stroke: new ol.style.Stroke({ color: '#ff0000', width: 3 }),
+          }),
+        })
+
         popupCloser.onclick = () => {
           overlay.setPosition(undefined)
           popupCloser.blur()
@@ -70,7 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         vectorSource = new ol.source.Vector()
-        const vectorLayer = new ol.layer.Vector({
+        vectorLayer = new ol.layer.Vector({
           source: vectorSource,
           style: new ol.style.Style({
             image: new ol.style.Icon({
@@ -90,6 +158,7 @@ document.addEventListener('DOMContentLoaded', () => {
               source: new ol.source.OSM(),
             }),
             vectorLayer,
+            vectorLayer2,
           ],
           overlays: [overlay],
           view: new ol.View({ center: [0, 0], zoom: 2 }),
@@ -99,9 +168,11 @@ document.addEventListener('DOMContentLoaded', () => {
           overlay.setPosition(undefined)
           const feature = mapInstance.forEachFeatureAtPixel(evt.pixel, f => f)
           if (feature) {
-            const coordinates = feature
-              .getGeometry()
-              .getCoordinates()
+            const geom = feature.getGeometry()
+            const coordinates
+              = geom.getType() === 'LineString' || geom.getType() === 'MultiLineString'
+                ? geom.getClosestPoint(evt.coordinate)
+                : geom.getCoordinates()
 
             let content = '<strong>Propriétés</strong><br><hr>'
             const properties = feature.getProperties()
@@ -126,6 +197,7 @@ document.addEventListener('DOMContentLoaded', () => {
         scene.screenSpaceCameraController.enableTranslate = false
         scene.screenSpaceCameraController.enableTilt = false
 
+        applyDatasetFilter()
         loadGeoJson()
         refreshTimer = setInterval(loadGeoJson, 10000)
       }
@@ -136,6 +208,9 @@ document.addEventListener('DOMContentLoaded', () => {
           olCesiumInstance.setEnabled(is3dMode.value)
         }
       }
+
+      // React to dataset filter changes
+      watch(datasetFilter, applyDatasetFilter)
 
       onMounted(() => {
         const checkLibraries = () => {
@@ -157,6 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
         error,
         markerCount,
         is3dMode,
+        datasetFilter,
         toggleViewMode,
       }
     },

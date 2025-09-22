@@ -3,7 +3,7 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "build": "bun build ./index.html --minify --outdir=dist",
+    "build": "rm -rf dist; bun build ./index.html --minify --outdir=dist",
     "lint": "eslint ."
   },
   "peerDependencies": {

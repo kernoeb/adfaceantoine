@@ -114,7 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const color = feature.get('color') || '#ff0000' // fallback si pas défini
             return new ol.style.Style({
               stroke: new ol.style.Stroke({
-                color: color,
+                color,
                 width: 3,
               }),
             })

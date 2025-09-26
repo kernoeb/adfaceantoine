@@ -27,6 +27,7 @@
       src="https://cdn.jsdelivr.net/npm/ol-cesium@2/dist/olcesium.js"
       defer
     ></script>
+    <script src="https://unpkg.com/@turf/turf@7.2.0/turf.min.js" defer></script>
   </head>
   <body>
     <div id="app" v-cloak>
@@ -59,11 +60,28 @@
           Erreur : {{ error }}
         </div>
 
-        <!-- Legend -->
-        <div class="legend">
-          <img class="legend-icon" src="./antoine.png" alt="adfaceantoine" />
-          {{ markerCount }} AdFaceAntoine{{ markerCount !== 1 ? 's' : '' }}
-        </div>
+        <Transition>
+          <div class="legend" v-if="markerCount != null && distanceKm != null">
+            <div class="legend-item">
+              <img
+                class="legend-icon"
+                src="./antoine.png"
+                alt="adfaceantoine"
+              />
+              {{ markerCount != null ? markerCount : '...' }} AdFaceAntoine{{
+              markerCount !== 1 ? 's' : '' }}
+            </div>
+            <div class="legend-item">
+              <img
+                class="legend-icon"
+                style="transform: scale(1.4)"
+                src="./chapo.png"
+                alt="adfacechapo"
+              />
+              Distance : {{ distanceKm != null ? distanceKm + ' km' : '...' }}
+            </div>
+          </div>
+        </Transition>
 
         <!-- Copyright -->
         <div class="copyright">

@@ -79,8 +79,6 @@ html {
 }
 
 .legend {
-  display: flex;
-  align-items: center;
   position: absolute;
   bottom: 20px;
   right: 10px;
@@ -89,15 +87,19 @@ html {
   padding: 10px 15px;
   border-radius: 5px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  border: 1px solid #ccc;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
   font-size: 14px;
   font-weight: 500;
-  border: 1px solid #ccc;
+  white-space: nowrap; /* Prevents text wrapping during resize */
 }
 
 .legend-icon {
   width: 14px;
-  height: 14px;
-  background-size: cover;
   margin-right: 8px;
 }
 
@@ -173,4 +175,14 @@ html {
   font-size: 1em;
   border: 1px solid #ccc;
   border-radius: 5px;
+}
+
+.v-enter-active,
+.v-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.v-enter-from,
+.v-leave-to {
+  opacity: 0;
 }

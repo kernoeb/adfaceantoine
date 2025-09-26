@@ -81,11 +81,19 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // Calculate and log the length of each LineString feature
-            const firstFeature = chapoData.features[0]
-            if (firstFeature && (firstFeature.geometry.type === 'LineString' || firstFeature.geometry.type === 'MultiLineString')) {
-              const distance = calculateLengthInKm(firstFeature)
-              distanceKm.value = distance.toFixed(2)
-            }
+            const features = new ol.format.GeoJSON().readFeatures(chapoData)
+            let totalLength = 0
+            features.forEach((feature) => {
+              const geom = feature.getGeometry()
+              if (geom) {
+                const geojsonGeom = new ol.format.GeoJSON().writeGeometryObject(geom)
+                if (geojsonGeom.type === 'LineString' || geojsonGeom.type === 'MultiLineString') {
+                  const length = calculateLengthInKm(geojsonGeom)
+                  totalLength += length
+                }
+              }
+            })
+            distanceKm.value = totalLength.toFixed(2)
           } catch (chapoError) {
             console.warn('Non-fatal: failed to load/process adchapo GeoJSON', chapoError)
           }

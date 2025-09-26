@@ -1,15 +1,16 @@
-/* global Vue, ol, olcs, Cesium */
+/* global Vue, ol, olcs, Cesium, turf */
 
 import { ADCHAPO_GEOJSON_URL, ANTOINE_BASE64_PNG, CESIUM_TOKEN, GEOJSON_URL } from './utils'
 
 document.addEventListener('DOMContentLoaded', () => {
-  const { createApp, ref, onMounted, onBeforeUnmount, watch } = Vue
+  const { createApp, ref, onMounted, onBeforeUnmount, watch, nextTick } = Vue
 
   createApp({
     setup() {
       const loading = ref(false)
       const error = ref(null)
-      const markerCount = ref(0)
+      const markerCount = ref(null)
+      const distanceKm = ref(null)
       const is3dMode = ref(false)
       const datasetFilter = ref('both')
 
@@ -29,6 +30,15 @@ document.addEventListener('DOMContentLoaded', () => {
       const processChapoFeatures = (features) => {
         // Since the new GeoJSON already contains MultiLineString, we can use features directly
         return features
+      }
+
+      /**
+       * Calculates the length of a LineString or MultiLineString feature in kilometers.
+       * @param {object} line - A GeoJSON LineString or MultiLineString feature.
+       * @returns {number} The length in kilometers.
+       */
+      const calculateLengthInKm = (line) => {
+        return turf.length(line, { units: 'kilometers' })
       }
 
       const loadGeoJson = async () => {
@@ -68,6 +78,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (vectorSource2) {
               vectorSource2.clear()
               vectorSource2.addFeatures(processedChapoFeatures)
+            }
+
+            // Calculate and log the length of each LineString feature
+            const firstFeature = chapoData.features[0]
+            if (firstFeature && (firstFeature.geometry.type === 'LineString' || firstFeature.geometry.type === 'MultiLineString')) {
+              const distance = calculateLengthInKm(firstFeature)
+              distanceKm.value = distance.toFixed(2)
             }
           } catch (chapoError) {
             console.warn('Non-fatal: failed to load/process adchapo GeoJSON', chapoError)
@@ -219,6 +236,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loading,
         error,
         markerCount,
+        distanceKm,
         is3dMode,
         datasetFilter,
         toggleViewMode,

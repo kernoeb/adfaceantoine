@@ -110,9 +110,15 @@ document.addEventListener('DOMContentLoaded', () => {
         vectorSource2 = new ol.source.Vector()
         vectorLayer2 = new ol.layer.Vector({
           source: vectorSource2,
-          style: new ol.style.Style({
-            stroke: new ol.style.Stroke({ color: '#ff0000', width: 3 }),
-          }),
+          style: (feature) => {
+            const color = feature.get('color') || '#ff0000' // fallback si pas défini
+            return new ol.style.Style({
+              stroke: new ol.style.Stroke({
+                color: color,
+                width: 3,
+              }),
+            })
+          },
         })
 
         popupCloser.onclick = () => {
@@ -161,7 +167,7 @@ document.addEventListener('DOMContentLoaded', () => {
             let content = '<strong>Propriétés</strong><br><hr>'
             const properties = feature.getProperties()
             for (const key in properties) {
-              if (key !== 'geometry') {
+              if (key !== 'geometry' && key !== 'color') {
                 content += `<strong>${key}:</strong> ${properties[key]}<br>`
               }
             }

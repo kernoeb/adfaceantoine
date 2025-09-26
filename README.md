@@ -1,21 +1,25 @@
 # adfaceantoine
 
+## Prerequisites
+
+- [Bun](https://bun.sh) v1.2 or higher
+
+## Getting Started
+
 To install dependencies:
 
 ```bash
 bun install
 ```
 
-To run:
+Run the project in development:
 
 ```bash
-bun ./index.html
+bun dev
 ```
 
-To build:
+Build for production:
 
 ```bash
-bun build ./index.html --minify --outdir=dist
+bun run build
 ```
-
-This project was created using `bun init` in bun v1.2.20. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.

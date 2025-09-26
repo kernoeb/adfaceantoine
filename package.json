@@ -3,6 +3,7 @@
   "type": "module",
   "private": true,
   "scripts": {
+    "dev": "bun ./index.html",
     "build": "rm -rf dist; bun build ./index.html --minify --outdir=dist",
     "lint": "eslint ."
   },

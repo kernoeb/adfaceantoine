@@ -3,7 +3,7 @@
 import { ADCHAPO_GEOJSON_URL, ANTOINE_BASE64_PNG, CESIUM_TOKEN, GEOJSON_URL } from './utils'
 
 document.addEventListener('DOMContentLoaded', () => {
-  const { createApp, ref, onMounted, onBeforeUnmount, watch, nextTick } = Vue
+  const { createApp, ref, onMounted, onBeforeUnmount, watch } = Vue
 
   createApp({
     setup() {

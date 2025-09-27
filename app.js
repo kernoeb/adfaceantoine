@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const distanceKm = ref(null)
       const is3dMode = ref(false)
       const datasetFilter = ref('both')
+      const wplaceTilesEnabled = ref(true)
 
       let mapInstance = null
       let olCesiumInstance = null
@@ -20,16 +21,30 @@ document.addEventListener('DOMContentLoaded', () => {
       let vectorLayer = null
       let vectorSource2 = null
       let vectorLayer2 = null
+      let wplaceTileLayer = null
       let refreshTimer = null
 
       /**
-       * Processes features from the adchapo GeoJSON which contains MultiLineString geometry.
-       * @param {ol.Feature[]} features - An array of OpenLayers features.
-       * @returns {ol.Feature[]} An array of processed features.
+       * Creates the wplace tile layer using OpenLayers native XYZ with custom URL template
        */
-      const processChapoFeatures = (features) => {
-        // Since the new GeoJSON already contains MultiLineString, we can use features directly
-        return features
+      const createWplaceTileLayer = (minZoom = 11, wplaceMaxZoom = 11) => {
+        return new ol.layer.Tile({
+          source: new ol.source.XYZ({
+            url: `${import.meta.env.NODE_ENV === 'production' ? '' : 'http://localhost:20000'}/wplace_tiles/{x}/{y}.png`,
+            minZoom,
+            maxZoom: wplaceMaxZoom,
+            crossOrigin: 'anonymous',
+            zDirection: 1,
+            tileGrid: ol.tilegrid.createXYZ({
+              minZoom,
+              maxZoom: wplaceMaxZoom,
+              tileSize: [256, 256],
+            }),
+          }),
+          minZoom,
+          opacity: 1,
+          visible: wplaceTilesEnabled.value,
+        })
       }
 
       /**
@@ -73,11 +88,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const chapoFeatures = new ol.format.GeoJSON().readFeatures(chapoData, {
               featureProjection: 'EPSG:3857',
             })
-            const processedChapoFeatures = processChapoFeatures(chapoFeatures)
 
             if (vectorSource2) {
               vectorSource2.clear()
-              vectorSource2.addFeatures(processedChapoFeatures)
+              vectorSource2.addFeatures(chapoFeatures)
             }
 
             // Calculate and log the length of each LineString feature
@@ -98,10 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.warn('Non-fatal: failed to load/process adchapo GeoJSON', chapoError)
           }
         } catch (e) {
-          console.error(
-            'Échec du chargement du GeoJSON :',
-            e,
-          )
+          console.error('Échec du chargement du GeoJSON :', e)
           error.value = e.message
         } finally {
           loading.value = false
@@ -115,6 +126,16 @@ document.addEventListener('DOMContentLoaded', () => {
         if (vectorLayer2) {
           vectorLayer2.setVisible(datasetFilter.value === 'both' || datasetFilter.value === 'geo2')
         }
+        if (wplaceTileLayer) {
+          wplaceTileLayer.setVisible(
+            wplaceTilesEnabled.value && (datasetFilter.value === 'both' || datasetFilter.value === 'geo2'),
+          )
+        }
+      }
+
+      const toggleWplaceTiles = () => {
+        wplaceTilesEnabled.value = !wplaceTilesEnabled.value
+        applyDatasetFilter()
       }
 
       const initializeMap = () => {
@@ -134,7 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
         vectorLayer2 = new ol.layer.Vector({
           source: vectorSource2,
           style: (feature) => {
-            const color = feature.get('color') || '#ff0000' // fallback si pas défini
+            const color = feature.get('color') || '#ED1C25' // fallback si pas défini
             return new ol.style.Style({
               stroke: new ol.style.Stroke({
                 color,
@@ -164,12 +185,16 @@ document.addEventListener('DOMContentLoaded', () => {
           }),
         })
 
+        // Create wplace tile layer using simple XYZ approach
+        wplaceTileLayer = createWplaceTileLayer()
+
         mapInstance = new ol.Map({
           target: 'map',
           layers: [
             new ol.layer.Tile({
               source: new ol.source.OSM(),
             }),
+            wplaceTileLayer,
             vectorLayer,
             vectorLayer2,
           ],
@@ -222,8 +247,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
 
-      // React to dataset filter changes
+      // React to filter changes
       watch(datasetFilter, applyDatasetFilter)
+      watch(wplaceTilesEnabled, applyDatasetFilter)
 
       onMounted(() => {
         const checkLibraries = () => {
@@ -247,7 +273,9 @@ document.addEventListener('DOMContentLoaded', () => {
         distanceKm,
         is3dMode,
         datasetFilter,
+        wplaceTilesEnabled,
         toggleViewMode,
+        toggleWplaceTiles,
       }
     },
   }).mount('#app')

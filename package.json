@@ -3,8 +3,9 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "bun ./index.html",
-    "build": "rm -rf dist; bun build ./index.html --minify --outdir=dist",
+    "dev": "bun ./index.html --console",
+    "build": "bun run scripts/build",
+    "downloader": "bun run scripts/downloader",
     "lint": "eslint ."
   },
   "peerDependencies": {
@@ -14,6 +15,7 @@
     "@antfu/eslint-config": "^5.2.1",
     "@types/bun": "latest",
     "eslint": "^9.34.0",
-    "eslint-plugin-format": "^1.0.1"
+    "eslint-plugin-format": "^1.0.1",
+    "ol": "9"
   }
 }

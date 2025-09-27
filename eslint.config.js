@@ -14,6 +14,9 @@ export default antfu(
       'unused-imports/no-unused-vars': 'warn',
       'unused-imports/no-unused-imports': 'warn',
       'jsonc/sort-keys': 'error',
+      'antfu/no-top-level-await': 'off',
+      'no-console': 'off',
+      'new-cap': 'off',
     },
   },
 )

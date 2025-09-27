@@ -1,6 +1,5 @@
-/* global Vue, ol, olcs, Cesium, turf */
-
-import { ADCHAPO_GEOJSON_URL, ANTOINE_BASE64_PNG, CESIUM_TOKEN, GEOJSON_URL } from './utils'
+/* global Vue, maplibregl, turf, __BUILD__ */
+import { ADCHAPO_GEOJSON_URL, ANTOINE_BASE64_PNG, GEOJSON_URL } from './utils'
 
 document.addEventListener('DOMContentLoaded', () => {
   const { createApp, ref, onMounted, onBeforeUnmount, watch } = Vue
@@ -14,102 +13,171 @@ document.addEventListener('DOMContentLoaded', () => {
       const is3dMode = ref(false)
       const datasetFilter = ref('both')
       const wplaceTilesEnabled = ref(true)
+      const mapStyle = ref('liberty')
 
-      let mapInstance = null
-      let olCesiumInstance = null
-      let vectorSource = null
-      let vectorLayer = null
-      let vectorSource2 = null
-      let vectorLayer2 = null
-      let wplaceTileLayer = null
+      let map = null
       let refreshTimer = null
 
-      /**
-       * Creates the wplace tile layer using OpenLayers native XYZ with custom URL template
-       */
-      const createWplaceTileLayer = (minZoom = 11, wplaceMaxZoom = 11) => {
-        return new ol.layer.Tile({
-          source: new ol.source.XYZ({
-            url: `${import.meta?.env?.NODE_ENV === 'production' ? '' : 'http://localhost:20000'}/wplace_tiles/{x}/{y}.png`,
-            minZoom,
-            maxZoom: wplaceMaxZoom,
-            crossOrigin: 'anonymous',
-            zDirection: 1,
-            tileGrid: ol.tilegrid.createXYZ({
-              minZoom,
-              maxZoom: wplaceMaxZoom,
-              tileSize: [256, 256],
-            }),
-          }),
-          minZoom,
-          opacity: 1,
-          visible: wplaceTilesEnabled.value,
-        })
+      let lastGeo1Data = { type: 'FeatureCollection', features: [] }
+      let lastGeo2Data = { type: 'FeatureCollection', features: [] }
+
+      const STYLE_IDS = {
+        geo1Source: 'geo1-src',
+        geo1Layer: 'geo1-layer',
+        geo2Source: 'geo2-src',
+        geo2Layer: 'geo2-layer',
+        wplaceSource: 'wplace-src',
+        wplaceLayer: 'wplace-layer',
+        markerImage: 'antoine-marker',
       }
 
-      /**
-       * Calculates the length of a LineString or MultiLineString feature in kilometers.
-       * @param {object} line - A GeoJSON LineString or MultiLineString feature.
-       * @returns {number} The length in kilometers.
-       */
-      const calculateLengthInKm = (line) => {
-        return turf.length(line, { units: 'kilometers' })
+      const styleUrl = name => `https://tiles.openfreemap.org/styles/${name}`
+
+      const ensureMarkerImage = () =>
+        new Promise((resolve, reject) => {
+          try {
+            if (map.hasImage(STYLE_IDS.markerImage)) return resolve()
+            const img = new Image()
+            img.onload = () => {
+              try {
+                if (!map.hasImage(STYLE_IDS.markerImage)) {
+                  map.addImage(STYLE_IDS.markerImage, img, { pixelRatio: 1 })
+                }
+                resolve()
+              } catch (e) {
+                reject(e)
+              }
+            }
+            img.onerror = reject
+            img.src = ANTOINE_BASE64_PNG
+          } catch (e) {
+            reject(e)
+          }
+        })
+
+      const addOrUpdateSources = () => {
+        if (!map.getSource(STYLE_IDS.geo1Source)) {
+          map.addSource(STYLE_IDS.geo1Source, { type: 'geojson', data: lastGeo1Data })
+        } else {
+          map.getSource(STYLE_IDS.geo1Source).setData(lastGeo1Data)
+        }
+
+        if (!map.getSource(STYLE_IDS.geo2Source)) {
+          map.addSource(STYLE_IDS.geo2Source, { type: 'geojson', data: lastGeo2Data })
+        } else {
+          map.getSource(STYLE_IDS.geo2Source).setData(lastGeo2Data)
+        }
+
+        if (!map.getSource(STYLE_IDS.wplaceSource)) {
+          const isProd = typeof __BUILD__ !== 'undefined' && __BUILD__ === true
+          const base = isProd ? '' : 'http://localhost:20000'
+          map.addSource(STYLE_IDS.wplaceSource, {
+            type: 'raster',
+            tiles: [`${base}/wplace_tiles/{x}/{y}.png`],
+            tileSize: 256,
+            minzoom: 11,
+            maxzoom: 11,
+          })
+        }
+      }
+
+      const addLayersIfMissing = () => {
+        if (!map.getLayer(STYLE_IDS.wplaceLayer)) {
+          map.addLayer({
+            id: STYLE_IDS.wplaceLayer,
+            type: 'raster',
+            source: STYLE_IDS.wplaceSource,
+            layout: { visibility: 'visible' },
+            paint: { 'raster-opacity': 1 },
+          })
+        }
+
+        if (!map.getLayer(STYLE_IDS.geo1Layer)) {
+          map.addLayer({
+            id: STYLE_IDS.geo1Layer,
+            type: 'symbol',
+            source: STYLE_IDS.geo1Source,
+            layout: {
+              'icon-image': STYLE_IDS.markerImage,
+              'icon-size': 0.15,
+              'icon-allow-overlap': true,
+            },
+          })
+        }
+
+        if (!map.getLayer(STYLE_IDS.geo2Layer)) {
+          map.addLayer({
+            id: STYLE_IDS.geo2Layer,
+            type: 'line',
+            source: STYLE_IDS.geo2Source,
+            paint: {
+              'line-color': [
+                'case',
+                ['has', 'color'],
+                ['get', 'color'],
+                '#ED1C25',
+              ],
+              'line-width': 3,
+            },
+          })
+        }
+      }
+
+      const applyDatasetFilter = () => {
+        const setVis = (layerId, visible) => {
+          if (!map || !map.getLayer(layerId)) return
+          map.setLayoutProperty(layerId, 'visibility', visible ? 'visible' : 'none')
+        }
+
+        const showGeo1 = datasetFilter.value === 'both' || datasetFilter.value === 'geo1'
+        const showGeo2 = datasetFilter.value === 'both' || datasetFilter.value === 'geo2'
+        const showWplace
+          = wplaceTilesEnabled.value
+            && (datasetFilter.value === 'both' || datasetFilter.value === 'geo2')
+
+        setVis(STYLE_IDS.geo1Layer, showGeo1)
+        setVis(STYLE_IDS.geo2Layer, showGeo2)
+        setVis(STYLE_IDS.wplaceLayer, showWplace)
+      }
+
+      const readdOverlays = async () => {
+        await ensureMarkerImage() // image must exist before symbol layer references it [web:3]
+        addOrUpdateSources() // sources are wiped by setStyle and must be recreated [web:5]
+        addLayersIfMissing() // re-add layers referencing the recreated sources [web:3]
+        applyDatasetFilter() // restore visibility toggles on the fresh layers [web:3]
       }
 
       const loadGeoJson = async () => {
+        if (!map) return
         loading.value = true
         error.value = null
         try {
-          // Load primary GeoJSON (Antoine markers)
-          const response = await fetch(
-            `${GEOJSON_URL}?_=${Date.now()}`,
-            { cache: 'no-store' },
-          )
-          if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`)
-          }
-          const data = await response.json()
+          const res1 = await fetch(`${GEOJSON_URL}?_=${Date.now()}`, { cache: 'no-store' })
+          if (!res1.ok) throw new Error(`HTTP ${res1.status} for GEOJSON_URL`)
+          const data1 = await res1.json()
+          lastGeo1Data = data1 && data1.type ? data1 : { type: 'FeatureCollection', features: [] }
+          if (map.getSource(STYLE_IDS.geo1Source)) map.getSource(STYLE_IDS.geo1Source).setData(lastGeo1Data)
+          markerCount.value = Array.isArray(lastGeo1Data.features) ? lastGeo1Data.features.length : 0
 
-          const features = new ol.format.GeoJSON().readFeatures(data, {
-            featureProjection: 'EPSG:3857',
-          })
-
-          vectorSource.clear()
-          vectorSource.addFeatures(features)
-          markerCount.value = vectorSource.getFeatures().length
-
-          // Load adchapo GeoJSON dataset (red lines)
           try {
-            const chapoResponse = await fetch(`${ADCHAPO_GEOJSON_URL}?_=${Date.now()}`, { cache: 'no-store' })
-            if (!chapoResponse.ok) {
-              throw new Error(`HTTP error! Status: ${chapoResponse.status} for adchapo`)
-            }
-            const chapoData = await chapoResponse.json()
-            const chapoFeatures = new ol.format.GeoJSON().readFeatures(chapoData, {
-              featureProjection: 'EPSG:3857',
-            })
+            const res2 = await fetch(`${ADCHAPO_GEOJSON_URL}?_=${Date.now()}`, { cache: 'no-store' })
+            if (!res2.ok) throw new Error(`HTTP ${res2.status} for ADCHAPO_GEOJSON_URL`)
+            const data2 = await res2.json()
+            lastGeo2Data = data2 && data2.type ? data2 : { type: 'FeatureCollection', features: [] }
+            if (map.getSource(STYLE_IDS.geo2Source)) map.getSource(STYLE_IDS.geo2Source).setData(lastGeo2Data)
 
-            if (vectorSource2) {
-              vectorSource2.clear()
-              vectorSource2.addFeatures(chapoFeatures)
-            }
-
-            // Calculate and log the length of each LineString feature
-            const features = new ol.format.GeoJSON().readFeatures(chapoData)
-            let totalLength = 0
-            features.forEach((feature) => {
-              const geom = feature.getGeometry()
-              if (geom) {
-                const geojsonGeom = new ol.format.GeoJSON().writeGeometryObject(geom)
-                if (geojsonGeom.type === 'LineString' || geojsonGeom.type === 'MultiLineString') {
-                  const length = calculateLengthInKm(geojsonGeom)
-                  totalLength += length
-                }
+            let total = 0
+            const feats2 = Array.isArray(lastGeo2Data.features) ? lastGeo2Data.features : []
+            for (const f of feats2) {
+              if (!f || !f.geometry) continue
+              const t = f.geometry.type
+              if (t === 'LineString' || t === 'MultiLineString') {
+                total += turf.length(f, { units: 'kilometers' })
               }
-            })
-            distanceKm.value = totalLength.toFixed(2)
-          } catch (chapoError) {
-            console.warn('Non-fatal: failed to load/process adchapo GeoJSON', chapoError)
+            }
+            distanceKm.value = total.toFixed(2)
+          } catch (chapoErr) {
+            console.warn('Non-fatal: adchapo load failed', chapoErr)
           }
         } catch (e) {
           console.error('Échec du chargement du GeoJSON :', e)
@@ -119,18 +187,72 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
 
-      const applyDatasetFilter = () => {
-        if (vectorLayer) {
-          vectorLayer.setVisible(datasetFilter.value === 'both' || datasetFilter.value === 'geo1')
+      const handleMapClick = (e) => {
+        if (!map) return
+        const layers = [STYLE_IDS.geo1Layer, STYLE_IDS.geo2Layer].filter(id => map.getLayer(id))
+        if (!layers.length) return
+
+        const features = map.queryRenderedFeatures(e.point, { layers })
+        if (!features || !features.length) return
+
+        const f = features[0]
+
+        let coords = null
+
+        if (f.geometry.type === 'Point') {
+          coords = f.geometry.coordinates
+        } else if (f.geometry.type === 'LineString' || f.geometry.type === 'MultiLineString') {
+          // Use turf to find closest point on the line to click
+          const clickPoint = turf.point([e.lngLat.lng, e.lngLat.lat])
+          const line = f.geometry.type === 'LineString'
+            ? f
+            : turf.lineString(f.geometry.coordinates.flat())
+          const nearest = turf.nearestPointOnLine(line, clickPoint)
+          coords = nearest.geometry.coordinates
         }
-        if (vectorLayer2) {
-          vectorLayer2.setVisible(datasetFilter.value === 'both' || datasetFilter.value === 'geo2')
+
+        const props = { ...f.properties }
+        delete props.color
+
+        let html = '<strong>Propriétés</strong><br><hr>'
+        for (const k in props) html += `<strong>${k}:</strong> ${props[k]}<br>`
+
+        if (coords) {
+          const wplaceUrl = `https://wplace.live/?lat=${coords[1]}&lng=${coords[0]}&zoom=15`
+          html += `<strong>wplace :</strong> <a href="${wplaceUrl}" target="_blank" rel="noopener">${wplaceUrl}</a><br>`
         }
-        if (wplaceTileLayer) {
-          wplaceTileLayer.setVisible(
-            wplaceTilesEnabled.value && (datasetFilter.value === 'both' || datasetFilter.value === 'geo2'),
-          )
-        }
+
+        new maplibregl.Popup({ closeButton: true, closeOnClick: true })
+          .setMaxWidth('auto')
+          .setLngLat(coords || [e.lngLat.lng, e.lngLat.lat])
+          .setHTML(html)
+          .addTo(map)
+      }
+
+      const changeMapStyle = (name) => {
+        if (!map) return
+        mapStyle.value = name
+
+        const cam = {
+          center: map.getCenter(),
+          zoom: map.getZoom(),
+          bearing: map.getBearing(),
+          pitch: map.getPitch(),
+        } // save camera to keep view stable across base styles [web:5]
+
+        map.setStyle(styleUrl(name)) // this wipes runtime images/sources/layers by design [web:5]
+
+        // Use idle to ensure the style graph is fully ready before re-adding overlays
+        map.once('idle', async () => {
+          await readdOverlays() // addImage → addSource → addLayer → visibility [web:3]
+          map.jumpTo(cam) // restore camera after overlays are back [web:5]
+        })
+      }
+
+      const toggleViewMode = () => {
+        is3dMode.value = !is3dMode.value
+        if (!map) return
+        map.easeTo({ pitch: is3dMode.value ? 60 : 0, duration: 500 })
       }
 
       const toggleWplaceTiles = () => {
@@ -139,124 +261,39 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       const initializeMap = () => {
-        Cesium.Ion.defaultAccessToken = CESIUM_TOKEN
-
-        const popupContainer = document.getElementById('popup')
-        const popupContent = document.getElementById('popup-content')
-        const popupCloser = document.getElementById('popup-closer')
-
-        const overlay = new ol.Overlay({
-          element: popupContainer,
-          autoPan: { animation: { duration: 250 } },
+        map = new maplibregl.Map({
+          container: 'map',
+          style: styleUrl(mapStyle.value),
+          center: [0, 0],
+          zoom: 2,
+          pitch: 0,
+          bearing: 0,
+          attributionControl: true,
         })
 
-        // Second dataset: red trace/line
-        vectorSource2 = new ol.source.Vector()
-        vectorLayer2 = new ol.layer.Vector({
-          source: vectorSource2,
-          style: (feature) => {
-            const color = feature.get('color') || '#ED1C25' // fallback si pas défini
-            return new ol.style.Style({
-              stroke: new ol.style.Stroke({
-                color,
-                width: 3,
-              }),
-            })
-          },
+        // Simple first-render size fix (no observers needed)
+        map.once('render', () => {
+          if (map) map.resize()
+        }) // recalculates canvas size once [web:6]
+
+        map.on('load', async () => {
+          await readdOverlays() // initial add after base style is ready [web:3]
+          loadGeoJson() // populate sources with data [web:3]
+          refreshTimer = setInterval(loadGeoJson, 10000)
         })
 
-        popupCloser.onclick = () => {
-          overlay.setPosition(undefined)
-          popupCloser.blur()
-          return false
-        }
-
-        vectorSource = new ol.source.Vector()
-        vectorLayer = new ol.layer.Vector({
-          source: vectorSource,
-          style: new ol.style.Style({
-            image: new ol.style.Icon({
-              anchor: [0.5, 1],
-              anchorXUnits: 'fraction',
-              anchorYUnits: 'fraction',
-              src: ANTOINE_BASE64_PNG,
-              scale: 0.15,
-            }),
-          }),
-        })
-
-        // Create wplace tile layer using simple XYZ approach
-        wplaceTileLayer = createWplaceTileLayer()
-
-        mapInstance = new ol.Map({
-          target: 'map',
-          layers: [
-            new ol.layer.Tile({
-              source: new ol.source.OSM(),
-            }),
-            wplaceTileLayer,
-            vectorLayer,
-            vectorLayer2,
-          ],
-          overlays: [overlay],
-          view: new ol.View({ center: [0, 0], zoom: 2 }),
-        })
-
-        mapInstance.on('click', (evt) => {
-          overlay.setPosition(undefined)
-          const feature = mapInstance.forEachFeatureAtPixel(evt.pixel, f => f)
-          if (feature) {
-            const geom = feature.getGeometry()
-            const coordinates
-              = geom.getType() === 'LineString' || geom.getType() === 'MultiLineString'
-                ? geom.getClosestPoint(evt.coordinate)
-                : geom.getCoordinates()
-
-            let content = '<strong>Propriétés</strong><br><hr>'
-            const properties = feature.getProperties()
-            for (const key in properties) {
-              if (key !== 'geometry' && key !== 'color') {
-                content += `<strong>${key}:</strong> ${properties[key]}<br>`
-              }
-            }
-            const [lon, lat] = ol.proj.toLonLat(coordinates)
-            const wplaceUrl = `https://wplace.live/?lat=${lat}&lng=${lon}&zoom=15`
-            content += `<strong>wplace :</strong> <a href="${wplaceUrl}" target="_blank" rel="noopener">${wplaceUrl}</a><br>`
-
-            popupContent.innerHTML = content
-            overlay.setPosition(coordinates)
-          }
-        })
-
-        olCesiumInstance = new olcs.OLCesium({
-          map: mapInstance,
-        })
-        const scene = olCesiumInstance.getCesiumScene()
-        scene.screenSpaceCameraController.enableTranslate = false
-        scene.screenSpaceCameraController.enableTilt = false
-
-        applyDatasetFilter()
-        loadGeoJson()
-        refreshTimer = setInterval(loadGeoJson, 10000)
+        map.on('click', handleMapClick)
       }
 
-      const toggleViewMode = () => {
-        is3dMode.value = !is3dMode.value
-        if (olCesiumInstance) {
-          olCesiumInstance.setEnabled(is3dMode.value)
-        }
-      }
-
-      // React to filter changes
       watch(datasetFilter, applyDatasetFilter)
       watch(wplaceTilesEnabled, applyDatasetFilter)
 
       onMounted(() => {
         const checkLibraries = () => {
-          if (window.ol && window.Cesium && window.olcs) {
+          if (window.maplibregl && window.turf) {
             initializeMap()
           } else {
-            setTimeout(checkLibraries, 100)
+            setTimeout(checkLibraries, 50)
           }
         }
         checkLibraries()
@@ -264,6 +301,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
       onBeforeUnmount(() => {
         if (refreshTimer) clearInterval(refreshTimer)
+        if (map) {
+          map.off('click', handleMapClick)
+          map.remove()
+          map = null
+        }
       })
 
       return {
@@ -274,8 +316,10 @@ document.addEventListener('DOMContentLoaded', () => {
         is3dMode,
         datasetFilter,
         wplaceTilesEnabled,
+        mapStyle,
         toggleViewMode,
         toggleWplaceTiles,
+        changeMapStyle,
       }
     },
   }).mount('#app')

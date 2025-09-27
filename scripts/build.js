@@ -17,7 +17,7 @@ await Bun.build({
   outdir,
   minify: true,
   define: {
-    'import.meta.env.NODE_ENV': JSON.stringify(Bun.env.NODE_ENV || 'development'),
+    __BUILD__: 'true',
   },
 })
 

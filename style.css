@@ -28,7 +28,10 @@ html {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap; /* Allow wrapping on smaller screens */
+  gap: 10px;
 }
+
 .header h1 {
   margin: 0;
   font-size: 1.2em;
@@ -96,11 +99,23 @@ html {
   font-size: 14px;
   font-weight: 500;
   white-space: nowrap; /* Prevents text wrapping during resize */
+  margin-bottom: 4px;
+}
+
+.legend-item:last-child {
+  margin-bottom: 0;
 }
 
 .legend-icon {
   width: 14px;
   margin-right: 8px;
+}
+
+.legend-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #555;
+  text-transform: capitalize;
 }
 
 .copyright {
@@ -170,17 +185,85 @@ html {
   content: "✖";
 }
 
+/* Enhanced control group styling */
 .control-group {
   display: flex;
-  align-items: center; /* vertically centers everything */
-  gap: 10px; /* space between switch, label, and select */
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+/* Style selector */
+.style-selector {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.style-selector label {
+  font-size: 0.9em;
+  font-weight: 500;
+  color: #333;
+  white-space: nowrap;
+}
+
+.style-select {
+  padding: 4px 8px;
+  font-size: 0.9em;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background-color: #fff;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.style-select:hover {
+  border-color: #007bff;
+}
+
+.style-select:focus {
+  outline: none;
+  border-color: #007bff;
+}
+
+/* WPlace toggle styling */
+.wplace-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Dataset filter styling */
+.dataset-filter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dataset-filter label {
+  font-size: 0.9em;
+  font-weight: 500;
+  color: #333;
+  white-space: nowrap;
 }
 
 .dataset-select {
   padding: 4px 8px;
-  font-size: 1em;
+  font-size: 0.9em;
   border: 1px solid #ccc;
   border-radius: 5px;
+  background-color: #fff;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.dataset-select:hover {
+  border-color: #28a745;
+}
+
+.dataset-select:focus {
+  outline: none;
+  border-color: #28a745;
 }
 
 .switch {
@@ -236,4 +319,48 @@ input:checked + .slider:before {
 .v-enter-from,
 .v-leave-to {
   opacity: 0;
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 768px) {
+  .header {
+    padding: 8px 12px;
+  }
+
+  .control-group {
+    gap: 10px;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .style-selector,
+  .wplace-toggle,
+  .dataset-filter {
+    flex-shrink: 0;
+  }
+
+  .view-toggle-btn {
+    font-size: 0.8em;
+    padding: 5px 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .header {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .control-group {
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .style-selector,
+  .wplace-toggle,
+  .dataset-filter {
+    width: 100%;
+    justify-content: center;
+  }
 }

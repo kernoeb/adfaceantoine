@@ -8,23 +8,22 @@
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="./antoine.png" />
 
-    <!-- OpenLayers CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v9/ol.css" />
+    <!-- MapLibre GL JS (CSS + JS) -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/maplibre-gl/dist/maplibre-gl.css"
+    />
+    <script
+      src="https://unpkg.com/maplibre-gl/dist/maplibre-gl.js"
+      defer
+    ></script>
 
+    <!-- App CSS -->
     <link rel="stylesheet" href="./style.css" />
 
     <!-- External Libraries -->
     <script
       src="https://unpkg.com/vue@3/dist/vue.global.prod.js"
-      defer
-    ></script>
-    <script src="https://cdn.jsdelivr.net/npm/ol@v9/dist/ol.js" defer></script>
-    <script
-      src="https://cesium.com/downloads/cesiumjs/releases/1.132/Build/Cesium/Cesium.js"
-      defer
-    ></script>
-    <script
-      src="https://cdn.jsdelivr.net/npm/ol-cesium@2/dist/olcesium.js"
       defer
     ></script>
     <script src="https://unpkg.com/@turf/turf@7.2.0/turf.min.js" defer></script>
@@ -34,30 +33,48 @@
       <div class="header">
         <h1>AdFaceAntoine Viewer</h1>
         <button @click="toggleViewMode" class="view-toggle-btn">
-          {{ is3dMode ? 'Voir la carte 2D' : 'Voir la Terre 3D' }}
+          {{ is3dMode ? 'Voir la carte 2D' : 'Voir la carte 3D' }}
         </button>
         <div class="control-group">
-          <label class="switch">
-            <input v-model="wplaceTilesEnabled" type="checkbox" checked />
-            <span class="slider round"></span>
-          </label>
-          <span class="switch-label">Tuiles WPlace</span>
-          <select v-model="datasetFilter" class="dataset-select">
-            <option value="both">Les deux</option>
-            <option value="geo1">MINECRAFT</option>
-            <option value="geo2">CHAPO</option>
-          </select>
+          <div class="style-selector">
+            <label for="map-style-select">Style de carte :</label>
+            <select
+              id="map-style-select"
+              v-model="mapStyle"
+              @change="changeMapStyle(mapStyle)"
+              class="style-select"
+            >
+              <option value="liberty">Liberty</option>
+              <option value="bright">Bright</option>
+              <option value="positron">Positron</option>
+            </select>
+          </div>
+
+          <div class="wplace-toggle">
+            <label class="switch">
+              <input v-model="wplaceTilesEnabled" type="checkbox" checked />
+              <span class="slider round"></span>
+            </label>
+            <span class="switch-label">Tuiles WPlace</span>
+          </div>
+
+          <div class="dataset-filter">
+            <label for="dataset-select">Données :</label>
+            <select
+              id="dataset-select"
+              v-model="datasetFilter"
+              class="dataset-select"
+            >
+              <option value="both">Les deux</option>
+              <option value="geo1">MINECRAFT</option>
+              <option value="geo2">CHAPO</option>
+            </select>
+          </div>
         </div>
       </div>
 
       <div class="map-container">
         <div id="map"></div>
-
-        <!-- Popup container -->
-        <div id="popup" class="ol-popup">
-          <a href="#" id="popup-closer" class="ol-popup-closer"></a>
-          <div id="popup-content"></div>
-        </div>
 
         <!-- Status messages -->
         <div v-if="loading" class="status-overlay">
@@ -90,7 +107,6 @@
           </div>
         </Transition>
 
-        <!-- Copyright -->
         <div class="copyright">
           <a
             href="https://github.com/kernoeb"
@@ -99,10 +115,18 @@
             style="color: #666; text-decoration: none"
             >© kernoeb</a
           >
+          |
+          <a
+            href="https://openfreemap.org"
+            target="_blank"
+            rel="noopener"
+            style="color: #666; text-decoration: none"
+            >OpenFreeMap</a
+          >
         </div>
       </div>
     </div>
 
-    <script src="./app.js" />
+    <script src="./app.js"></script>
   </body>
 </html>

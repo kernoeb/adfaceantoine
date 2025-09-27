@@ -2,5 +2,3 @@ export const ANTOINE_BASE64_PNG = `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgA
 
 export const GEOJSON_URL = 'https://gist.githubusercontent.com/kernoeb/95db7d5949f8c558fab754ba18214dc6/raw'
 export const ADCHAPO_GEOJSON_URL = 'https://gist.githubusercontent.com/kernoeb/462dc24f707235bb99cb09333f330de7/raw'
-
-export const CESIUM_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI3YmYzMzYyOS0zOTA3LTRjZmEtYmZlMS1kMTZjMWI1Nzc3ZDAiLCJpZCI6MzMyNzYyLCJpYXQiOjE3NTU0NTg3MTN9.8XfWl4gVoUCTZ1yMYHcHvmH_hSI4SJG_tPn6CSpg3pw'

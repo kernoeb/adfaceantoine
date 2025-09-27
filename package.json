@@ -16,6 +16,7 @@
     "@types/bun": "latest",
     "eslint": "^9.34.0",
     "eslint-plugin-format": "^1.0.1",
-    "ol": "9"
+    "ol": "9",
+    "sharp": "^0.34.4"
   }
 }

@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const createWplaceTileLayer = (minZoom = 11, wplaceMaxZoom = 11) => {
         return new ol.layer.Tile({
           source: new ol.source.XYZ({
-            url: `${import.meta.env.NODE_ENV === 'production' ? '' : 'http://localhost:20000'}/wplace_tiles/{x}/{y}.png`,
+            url: `${import.meta?.env?.NODE_ENV === 'production' ? '' : 'http://localhost:20000'}/wplace_tiles/{x}/{y}.png`,
             minZoom,
             maxZoom: wplaceMaxZoom,
             crossOrigin: 'anonymous',

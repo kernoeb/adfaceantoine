@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const base = isProd ? '' : 'http://localhost:20000'
           map.addSource(STYLE_IDS.wplaceSource, {
             type: 'raster',
-            tiles: [`${base}/wplace_tiles/{x}/{y}_upscaled.png`],
+            tiles: [`${base}/wplace_tiles/{x}/{y}.png`],
             tileSize: 256,
             minzoom: 11,
             maxzoom: 11,
@@ -88,7 +88,10 @@ document.addEventListener('DOMContentLoaded', () => {
             type: 'raster',
             source: STYLE_IDS.wplaceSource,
             layout: { visibility: 'visible' },
-            paint: { 'raster-opacity': 1 },
+            paint: {
+              'raster-opacity': 1,
+              'raster-resampling': 'nearest',
+            },
           })
         }
 

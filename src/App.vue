@@ -378,7 +378,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="h-screen flex flex-col">
+  <div class="h-dvh flex flex-col">
     <!-- Navbar with fixed height -->
     <div class="navbar bg-base-100 border-b border-base-300 min-h-12 h-12">
       <div class="navbar-start">
@@ -515,7 +515,7 @@ onBeforeUnmount(() => {
         </div>
       </Transition>
       <div class="absolute bottom-2 left-2 bg-base-100 border border-base-300 shadow px-2 py-1 rounded text-xs">
-        <a class="link link-neutral" href="https://github.com/kernoeb" rel="noopener" target="_blank">© kernoeb</a>
+        <a class="link" href="https://github.com/kernoeb" rel="noopener" target="_blank">© kernoeb</a>
       </div>
     </div>
   </div>

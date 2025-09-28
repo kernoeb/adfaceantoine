@@ -1,13 +1,11 @@
-/* global Bun */
-
 import { existsSync } from 'node:fs'
 import { mkdir } from 'node:fs/promises'
 import process from 'node:process'
 import { fromLonLat } from 'ol/proj'
 import { createXYZ } from 'ol/tilegrid'
+import { ADCHAPO_GEOJSON_URL as GEOJSON_URL } from '../src/utils'
 
 // Configuration
-const GEOJSON_URL = 'https://gist.githubusercontent.com/kernoeb/462dc24f707235bb99cb09333f330de7/raw'
 const WPLACE_BASE_URL = 'https://backend.wplace.live/files/s0/tiles'
 const OUTPUT_DIR = 'public/wplace_tiles'
 const CACHE_404_FILE = 'wplace_404_cache.json'

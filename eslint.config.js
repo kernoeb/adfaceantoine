@@ -1,7 +1,5 @@
 import antfu from '@antfu/eslint-config'
 
-
-
 export default antfu(
   {
     stylistic: true,
@@ -24,5 +22,5 @@ export default antfu(
       'vue/custom-event-name-casing': ['error', 'camelCase', { ignores: ['/^[a-z]+(?:-[a-z]+)*:[a-z]+(?:-[a-z]+)*$/u'] }],
       'jsonc/sort-keys': 'error',
     },
-  }
+  },
 )

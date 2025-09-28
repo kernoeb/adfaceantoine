@@ -1,13 +1,14 @@
 {
   "name": "adfaceantoine",
-  "private": true,
-  "version": "0.0.0",
   "type": "module",
+  "version": "0.0.0",
+  "private": true,
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview",
-    "downloader": "bun run scripts/downloader"
+    "downloader": "bun run scripts/downloader",
+    "lint": "eslint . --fix --cache"
   },
   "dependencies": {
     "@turf/turf": "^7.2.0",

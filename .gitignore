@@ -26,3 +26,4 @@ dist-ssr
 public/wplace_tiles/
 wplace_404_cache.json
 adfaceantoine.zip
+.eslintcache

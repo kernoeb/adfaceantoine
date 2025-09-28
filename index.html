@@ -1,132 +1,15 @@
 <!doctype html>
-<html lang="fr">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AdFaceAntoine Viewer</title>
-
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" href="./antoine.png" />
-
-    <!-- MapLibre GL JS (CSS + JS) -->
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/maplibre-gl/dist/maplibre-gl.css"
-    />
-    <script
-      src="https://unpkg.com/maplibre-gl/dist/maplibre-gl.js"
-      defer
-    ></script>
-
-    <!-- App CSS -->
-    <link rel="stylesheet" href="./style.css" />
-
-    <!-- External Libraries -->
-    <script
-      src="https://unpkg.com/vue@3/dist/vue.global.prod.js"
-      defer
-    ></script>
-    <script src="https://unpkg.com/@turf/turf@7.2.0/turf.min.js" defer></script>
-  </head>
-  <body>
-    <div id="app" v-cloak>
-      <div class="header">
-        <h1>AdFaceAntoine Viewer</h1>
-        <button @click="toggleViewMode" class="view-toggle-btn">
-          {{ is3dMode ? 'Voir la carte 2D' : 'Voir la carte 3D' }}
-        </button>
-        <div class="control-group">
-          <div class="style-selector">
-            <label for="map-style-select">Style de carte :</label>
-            <select
-              id="map-style-select"
-              v-model="mapStyle"
-              @change="changeMapStyle(mapStyle)"
-              class="style-select"
-            >
-              <option value="liberty">Liberty</option>
-              <option value="bright">Bright</option>
-              <option value="positron">Positron</option>
-            </select>
-          </div>
-
-          <div class="wplace-toggle">
-            <label class="switch">
-              <input v-model="wplaceTilesEnabled" type="checkbox" checked />
-              <span class="slider round"></span>
-            </label>
-            <span class="switch-label">Tuiles WPlace</span>
-          </div>
-
-          <div class="dataset-filter">
-            <label for="dataset-select">Données :</label>
-            <select
-              id="dataset-select"
-              v-model="datasetFilter"
-              class="dataset-select"
-            >
-              <option value="both">Les deux</option>
-              <option value="geo1">MINECRAFT</option>
-              <option value="geo2">CHAPO</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <div class="map-container">
-        <div id="map"></div>
-
-        <!-- Status messages -->
-        <div v-if="loading" class="status-overlay">
-          Chargement des données...
-        </div>
-        <div v-if="error" class="status-overlay error">
-          Erreur : {{ error }}
-        </div>
-
-        <Transition>
-          <div class="legend" v-if="markerCount != null && distanceKm != null">
-            <div class="legend-item">
-              <img
-                class="legend-icon"
-                src="./antoine.png"
-                alt="adfaceantoine"
-              />
-              {{ markerCount != null ? markerCount : '...' }} AdFaceAntoine{{
-              markerCount !== 1 ? 's' : '' }}
-            </div>
-            <div class="legend-item">
-              <img
-                class="legend-icon"
-                style="transform: scale(1.4)"
-                src="./chapo.png"
-                alt="adfacechapo"
-              />
-              Distance : {{ distanceKm != null ? distanceKm + ' km' : '...' }}
-            </div>
-          </div>
-        </Transition>
-
-        <div class="copyright">
-          <a
-            href="https://github.com/kernoeb"
-            target="_blank"
-            rel="noopener"
-            style="color: #666; text-decoration: none"
-            >© kernoeb</a
-          >
-          |
-          <a
-            href="https://openfreemap.org"
-            target="_blank"
-            rel="noopener"
-            style="color: #666; text-decoration: none"
-            >OpenFreeMap</a
-          >
-        </div>
-      </div>
-    </div>
-
-    <script src="./app.js"></script>
-  </body>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <link rel="icon" type="image/png" href="/antoine.png" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="description" content="AdFaceAntoine - Map Viewer" />
+        <meta name="author" content="kernoeb" />
+        <title>AdFaceAntoine Viewer</title>
+    </head>
+    <body>
+        <div id="app"></div>
+        <script type="module" src="/src/main.ts"></script>
+    </body>
 </html>

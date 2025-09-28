@@ -9,7 +9,7 @@ import { createXYZ } from 'ol/tilegrid'
 // Configuration
 const GEOJSON_URL = 'https://gist.githubusercontent.com/kernoeb/462dc24f707235bb99cb09333f330de7/raw'
 const WPLACE_BASE_URL = 'https://backend.wplace.live/files/s0/tiles'
-const OUTPUT_DIR = 'wplace_tiles'
+const OUTPUT_DIR = 'public/wplace_tiles'
 const CACHE_404_FILE = 'wplace_404_cache.json'
 const DELAY_MS = 500
 const DELAY_RATE_LIMIT_MS = 5000
@@ -84,7 +84,7 @@ function lonLatToWplaceTile(lon, lat) {
 
 // Get tiles for a line segment with adaptive sampling
 function getTilesForLineSegment(startCoord, endCoord) {
-  const tiles = new Set()
+  const tiles = new Set<string>()
 
   // Calculate distance and determine sampling points
   const dx = Math.abs(endCoord[0] - startCoord[0])
@@ -129,14 +129,14 @@ async function extractTilesFromGeoJSON() {
   const geojson = await response.json()
   console.log(`✅ GeoJSON loaded: ${geojson.features.length} features`)
 
-  const allTiles = new Set()
+  const allTiles = new Set<string>()
   let totalSegments = 0
 
   for (const feature of geojson.features) {
     const geom = feature.geometry
     if (!geom) continue
 
-    let lineStrings = []
+    let lineStrings: number[][][] = []
     if (geom.type === 'LineString') {
       lineStrings = [geom.coordinates]
     } else if (geom.type === 'MultiLineString') {

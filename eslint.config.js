@@ -1,22 +1,28 @@
 import antfu from '@antfu/eslint-config'
 
+
+
 export default antfu(
   {
-    formatters: {
-      html: true,
-    },
     stylistic: true,
     rules: {
+      'vue/attributes-order': ['error', {
+        alphabetical: true,
+      }],
+      'vue/component-name-in-template-casing': ['error', 'PascalCase', {
+        registeredComponentsOnly: true,
+        // ignore Vuetify components for future rule
+        ignores: ['/^v-/', '/^V[A-Z]/'],
+      }],
+      'no-console': 'off',
       'antfu/if-newline': 'off',
       'nonblock-statement-body-position': 'error',
       'curly': ['error', 'multi-line', 'consistent'],
       'style/brace-style': ['error', '1tbs', { allowSingleLine: false }],
       'unused-imports/no-unused-vars': 'warn',
       'unused-imports/no-unused-imports': 'warn',
+      'vue/custom-event-name-casing': ['error', 'camelCase', { ignores: ['/^[a-z]+(?:-[a-z]+)*:[a-z]+(?:-[a-z]+)*$/u'] }],
       'jsonc/sort-keys': 'error',
-      'antfu/no-top-level-await': 'off',
-      'no-console': 'off',
-      'new-cap': 'off',
     },
-  },
+  }
 )

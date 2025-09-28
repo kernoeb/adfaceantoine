@@ -76,7 +76,6 @@ const STYLE_IDS = {
 
 const styleUrl = (name: string) => `https://tiles.openfreemap.org/styles/${name}`
 
-// ... (rest of script is unchanged)
 function ensureMarkerImage(): Promise<void> {
   return new Promise<void>((resolve, reject) => {
     if (!map) return reject(new Error('map not ready'))
